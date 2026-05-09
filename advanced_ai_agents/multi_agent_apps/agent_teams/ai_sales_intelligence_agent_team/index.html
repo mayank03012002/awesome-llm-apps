@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Sales Intelligence Agent</title>
+    <style>
+        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; line-height: 1.6; max-width: 800px; margin: 0 auto; padding: 20px; color: #333; }
+        h1 { color: #2563eb; }
+        .chat-container { border: 1px solid #ddd; border-radius: 8px; padding: 20px; min-height: 400px; max-height: 600px; overflow-y: auto; margin-bottom: 20px; background-color: #f9fafb; }
+        .message { margin-bottom: 15px; padding: 10px 15px; border-radius: 8px; max-width: 80%; }
+        .user-message { background-color: #2563eb; color: white; margin-left: auto; border-bottom-right-radius: 2px; }
+        .bot-message { background-color: #e5e7eb; color: #1f2937; margin-right: auto; border-bottom-left-radius: 2px; white-space: pre-wrap; }
+        .input-area { display: flex; gap: 10px; }
+        input[type="text"] { flex-grow: 1; padding: 10px; border: 1px solid #ddd; border-radius: 4px; font-size: 16px; }
+        button { background-color: #2563eb; color: white; border: none; padding: 10px 20px; border-radius: 4px; cursor: pointer; font-size: 16px; font-weight: bold; }
+        button:hover { background-color: #1d4ed8; }
+        button:disabled { background-color: #93c5fd; cursor: not-allowed; }
+        .loading { display: none; font-style: italic; color: #6b7280; margin-top: 10px; text-align: center; }
+    </style>
+</head>
+<body>
+    <h1>AI Sales Intelligence Agent</h1>
+    <p>Ask me to create a battle card. Example: "Create a battle card for Salesforce. We sell HubSpot."</p>
+    
+    <div class="chat-container" id="chatContainer">
+        <div class="message bot-message">Hello! I am your AI-powered competitive intelligence analyst. Who are we competing against today?</div>
+    </div>
+    
+    <div class="loading" id="loadingIndicator">Agent is researching... This may take a minute or two.</div>
+    
+    <form class="input-area" id="chatForm">
+        <input type="text" id="userInput" placeholder="Type your request here..." required>
+        <button type="submit" id="sendBtn">Send</button>
+    </form>
+
+    <script>
+        const chatForm = document.getElementById('chatForm');
+        const userInput = document.getElementById('userInput');
+        const chatContainer = document.getElementById('chatContainer');
+        const sendBtn = document.getElementById('sendBtn');
+        const loadingIndicator = document.getElementById('loadingIndicator');
+
+        chatForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const text = userInput.value.trim();
+            if (!text) return;
+
+            // Add user message
+            addMessage(text, 'user');
+            userInput.value = '';
+            
+            // Show loading state
+            sendBtn.disabled = true;
+            loadingIndicator.style.display = 'block';
+
+            try {
+                const response = await fetch('/api/chat', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ query: text })
+                });
+
+                if (!response.ok) {
+                    throw new Error(`Server error: ${response.status}`);
+                }
+
+                const data = await response.json();
+                addMessage(data.response, 'bot');
+            } catch (error) {
+                console.error('Error:', error);
+                addMessage('Sorry, an error occurred while processing your request: ' + error.message, 'bot');
+            } finally {
+                sendBtn.disabled = false;
+                loadingIndicator.style.display = 'none';
+                userInput.focus();
+            }
+        });
+
+        function addMessage(text, sender) {
+            const div = document.createElement('div');
+            div.className = `message ${sender}-message`;
+            div.textContent = text;
+            chatContainer.appendChild(div);
+            chatContainer.scrollTop = chatContainer.scrollHeight;
+        }
+    </script>
+</body>
+</html>
